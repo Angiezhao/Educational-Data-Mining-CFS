@@ -1,0 +1,96 @@
+---
+title: "Assignment 4"
+author: "Charles Lang"
+date: "February 21, 2016"
+output: html_document
+---
+
+In this assignment we will be looking at a very simple feature selection method using correlation. Feature selection is the process we use to choose the features (or variables) from a data set that are of most consequence to the problem we are trying to solve.
+
+We will be using a data set from the Universitii degli Studi di Genova in Italy where an electronic engineering class used a set of simulations to help students learn circuits. You can find more information about these simulations here: http://www.esng.dibe.unige.it/deeds/
+
+The data is comprised of 13 variables:
+
+Student.Id - the id number of the student
+exam - student score on the final exam (0.0-100.0)
+session.1-6 - variables describing whether a student completed a simulation (1 = completed simulation, 0 = did not complete)
+Assignment_1-5 - student score on assignments during the semester (0.00-5.00)
+
+BUT before we get into the data we need to make sure we are well informed! Especially about the algorithm we are using AND we need to keep good documentation of its limitations. We will be using the Pearson Correlation as our feature selector so first we need to brush up on it. The following link is to a useful resource Sticigui, a free(!) online stats textbook from UC Berkeley:
+
+http://www.stat.berkeley.edu/~stark/SticiGui/Text/index.htm
+
+Index this resource in Zotero, then head to chapter 7 and read sections 7.1-7.3 or watch the corresponding videos.
+
+Create a note in Zotero that describes what correlations do and any limitations to their use you ind out.
+
+Now for some analysis!
+
+Install and load the following libraries and any dependencies they require: corrgram and Fselector (write the code in the chunk below)
+```{r}
+install.packages("corrgram")
+library(corrgram)
+install.packages("FSelector")
+library(FSelector)
+```
+
+Upload the data file "engineering_simulations.csv" into R as a data frame called "ES1" (write the code in the chunk below)
+```{r}
+ES1 <- read.table("~/Downloads/Assignment4-master/engineering_simulations.csv", sep =",", header = TRUE)
+View(ES1)
+```
+
+Now, create a new frame called "ES2" that contains all the variables EXCEPT Student.Id (we don't want to correlate Student.Id with anything)
+```{r}
+ES2 = dplyr::select(ES1, -Student.Id)
+View(ES2)
+```
+
+Now we are going to create a correlation matrix of all our variables to see which may have a noninear relationship. We will use the corrgram package to do this:
+```{r}
+corrgram(ES2, #Tells R which dataframe to use
+          order=TRUE, #Orders the variables by their relationship to each other
+          lower.panel=panel.ellipse, #Style of plot on the lower panel of the graph
+          upper.panel=panel.pts, text.panel=panel.txt, #Style of plot on the lower panel of the graph
+          diag.panel=panel.minmax, #Variable names on diagonal panes
+          main="Online Sessions")
+```
+
+Save your plot as a PDF in your Assignment4 folder and open it in a PDF viewer. Do you see any nonlinear relationships?
+
+
+
+Now we will get into the feature selection! 
+
+We are interested in what variables are important for final exams scores. We will use the Fselector package to do this. 
+```{r}
+#First we will create a vector of "weights" that includes all the correlations between each of our variables and our outcome exam. 
+weights <- linear.correlation(exam~., #exam~. specifies our model, outcome (exam) vs (~) all other variables (.)
+                              ES2) # is the dataframe we are using
+
+```
+
+Now we are going to choose the top 5 variables with the highest correlation
+```{r}
+subset1 <- cutoff.k(weights, 5)
+c(subset1)
+```
+Type "subset1" into the console to see your list. What are they? How would you interpret these results?
+
+Now we will use a different feature selection processes (Correlation Feature Selection or CFS) to that also tries to determine how many of the variables are important. It looks at the highest correlated variables AND which variables are correlated with each other. If two variables are highly correlated it chooses to inlcude the highest correlation with the outcome only.
+
+```{r}
+subset2 <- cfs(exam~., ES2)
+c(subset2)
+```
+
+Type "subset2" into the console to see the list of features you have selected. What is the difference between the two feature sets?
+
+Finally, save your RMarkdown document and index it in Zotero. Include any notes you think might be useful. Also export your zotero your library to the Assignment4 folder, then commit, push and pull your Assignment4 back to Github to submit. 
+
+
+
+
+
+
+
